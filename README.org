@@ -1,17 +1,17 @@
 
 * Setup
 
-`git clone https://github.com/alanbernstein/github-dashboard`
+~git clone https://github.com/alanbernstein/github-dashboard~
 
-`pip install -r requirements.txt`
+~pip install -r requirements.txt~
 
 update config (repo name, github token)
 
-create database according to `schema.sql` (call `init_db()` from python shell)
+create database according to ~schema.sql~ (call ~init_db()~ from python shell)
 
-`py app.py`
+~py app.py~
 
-hit `/retrieve` to populate database
+hit ~/retrieve~ to populate database
 
 
 * Screenshot
