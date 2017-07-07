@@ -12,3 +12,7 @@ create database according to `schema.sql` (call `init_db()` from python shell)
 `py app.py`
 
 hit `/retrieve` to populate database
+
+
+# Screenshot
+[[./screenshot.png]]
