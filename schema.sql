@@ -1,3 +1,10 @@
-CREATE TABLE star_cache (github_id integer primary key, time datetime);
-CREATE TABLE fork_cache (github_id integer primary key, time datetime);
-CREATE TABLE watch_cache (github_id integer primary key, time datetime);
+CREATE ROLE pilosa;
+ALTER ROLE pilosa WITH login;
+CREATE DATABASE github_pilosa;
+GRANT ALL PRIVILEGES ON DATABASE github_pilosa TO pilosa;
+CREATE TABLE star_cache (github_id integer primary key, time timestamp);
+CREATE TABLE fork_cache (github_id integer primary key, time timestamp);
+CREATE TABLE watch_cache (github_id integer primary key, time timestamp);
+GRANT ALL PRIVILEGES ON TABLE star_cache TO pilosa;
+GRANT ALL PRIVILEGES ON TABLE fork_cache TO pilosa;
+GRANT ALL PRIVILEGES ON TABLE watch_cache TO pilosa;

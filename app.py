@@ -1,9 +1,13 @@
-from flask import Flask, g, flash, redirect, render_template, request, session, abort
+from flask import Flask, g, render_template
 from github import Github
-import sqlite3
+import psycopg2
+import datetime
 from datetime import datetime as dt
+import collections
+import bisect
+from math import ceil
 
-### Config #############################
+# Config #############################
 import ConfigParser
 Config = ConfigParser.ConfigParser()
 Config.read("pilosa.cfg")
@@ -22,14 +26,21 @@ else:
     github_token = Config.get(section, 'token')
     github_repo = Config.get(section, 'repo')
 
-section = "Sqlite"
+section = "Postgres"
 if section not in Config.sections():
     raise Exception
 else:
-    db_path = Config.get(section, 'path')
+    db_args = (Config.get(section, 'database'),
+               Config.get(section, 'username'),
+               Config.get(section, 'password'),
+               Config.get(section, 'hostname'),
+    )
+    db_config = "dbname='%s' user='%s' password='%s' host='%s'" % db_args
+    print(db_config)
 
 
-### Init stuff ###########################
+
+# Init stuff ###########################
 app = Flask(__name__)
 gh = Github(github_token)
 repo = gh.get_repo(github_repo)
@@ -46,7 +57,7 @@ def init_db():
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
-        db = g._database = sqlite3.connect(db_path)
+        db = g._database = psycopg2.connect(db_config)
     return db
 
 
@@ -57,15 +68,15 @@ def close_connection(exception):
         db.close()
 
 
-### API retrieve functions ###############
+# API retrieve functions ###############
 def get_and_cache_stargazers():
     stargazers = repo.get_stargazers_with_dates()
     db = get_db()
     cur = db.cursor()
 
     for n, s in enumerate(stargazers):
-        query = "INSERT OR IGNORE INTO star_cache (github_id, time) values (?, ?)"
-        cur.execute(query, (s.user.id, s.starred_at))
+        query = "INSERT INTO star_cache (github_id, time) values (%s, '%s') ON CONFLICT DO NOTHING"
+        cur.execute(query % (s.user.id, s.starred_at))
     db.commit()
 
 
@@ -74,8 +85,8 @@ def get_and_cache_forks():
     db = get_db()
     cur = db.cursor()
     for f in forks:
-        query = "INSERT OR IGNORE INTO fork_cache (github_id, time) values (?, ?)"
-        cur.execute(query, (f.owner.id, f.created_at))
+        query = "INSERT INTO fork_cache (github_id, time) values (%s, '%s') ON CONFLICT DO NOTHING"
+        cur.execute(query % (f.owner.id, f.created_at))
     db.commit()
 
 
@@ -90,12 +101,12 @@ def get_and_cache_watchers():
     date = dt.now()
     date = date.replace(hour=0, minute=0, second=0, microsecond=0)
     for n, w in enumerate(watchers):
-        query = "INSERT OR IGNORE INTO watch_cache (github_id, time) VALUES (?, ?)"
-        cur.execute(query, (w.id, date))
+        query = "INSERT INTO watch_cache (github_id, time) VALUES (%s, '%s') ON CONFLICT DO NOTHING"
+        cur.execute(query % (w.id, date))
     db.commit()
 
 
-### DB read functions ############
+# DB read functions #####################
 def get_stargazers_from_cache():
     db = get_db()
     cur = db.cursor()
@@ -107,8 +118,6 @@ def get_stargazers_from_cache():
 
 def get_date_history(table, timespan):
     # compute #thing vs date from cached data
-    # TODO: want to include 0 counts so horizontal axis is right
-    parse_fmt = '%Y-%m-%d %H:%M:%S'
 
     if 'hour' in timespan:
         seconds = 60 * 60
@@ -125,20 +134,36 @@ def get_date_history(table, timespan):
 
     db = get_db()
     cur = db.cursor()
-    # do the aggregation in sql:
-    query = "SELECT datetime((strftime('%%s', time) / %d) * %d, 'unixepoch') interval,\
-             count(*) cnt\
-             from %s\
-             where time is not null\
-             group by interval\
-             order by interval" % (seconds, seconds, table)
+    query = "SELECT * FROM %s" % table
     cur.execute(query)
     rows = cur.fetchall()
-    return [{'period': dt.strftime(dt.strptime(r[0], parse_fmt), fmt),
-             'count': r[1]} for r in rows]
+
+    agg = group_time_rows(rows, seconds)
+    return [{'period': dt.strftime(k, fmt),
+             'count': len(v)} for k, v in agg.items()]
 
 
-### Endpoints ########################
+def group_time_rows(rows, seconds):
+    # TODO: want to include 0 counts so horizontal axis is right (would make data sparse though)
+    interval = datetime.timedelta(seconds=seconds)
+    rows.sort(key=lambda x: x[1])
+    start = rows[0][1]
+    end = dt.now()
+    N = (end - start).total_seconds() / seconds
+    grid = [start + n*interval for n in range(int(ceil(N))+1)]
+    bins = collections.OrderedDict()
+
+    for id, date in rows:
+        idx = bisect.bisect(grid, date)
+        if grid[idx] in bins:
+            bins[grid[idx]].append(id)
+        else:
+            bins[grid[idx]] = [id]
+
+    return bins
+
+
+# Endpoints ########################
 @app.route('/stars/list')
 def list_stargazers():
     m = ''
@@ -204,6 +229,6 @@ def index():
     return render_template('index.html')
 
 
-### Start #######################
+# Start #######################
 if __name__ == "__main__":
     app.run(host=host, port=port)
