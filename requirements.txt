@@ -1,3 +1,5 @@
+configparser
 flask
-github
-sqlite3
+flask-sqlalchemy
+psycopg2
+PyGithub

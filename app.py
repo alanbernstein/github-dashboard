@@ -8,8 +8,8 @@ import bisect
 from math import ceil
 
 # Config #############################
-import ConfigParser
-Config = ConfigParser.ConfigParser()
+import configparser
+Config = configparser.ConfigParser()
 Config.read("pilosa.cfg")
 section = "Base"
 if section not in Config.sections():
