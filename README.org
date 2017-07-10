@@ -1,13 +1,16 @@
 
 * Prerequisites
+homebrew: https://brew.sh/
+
 python: ~brew install python~
+
+git: ~brew install git~
 
 postgres: https://postgresapp.com/
 
 github token: https://github.com/settings/tokens
 
 * Setup
-
 ~git clone https://github.com/alanbernstein/github-dashboard~
 
 ~pip install -r requirements.txt~
@@ -25,6 +28,8 @@ view in browser at http://127.0.0.1:5000/ (default)
 visit ~/users/retrieve~ to populate database
 
 visit ~/watchers/retrieve~ to update watchers
+
+visit ~/stars/history/week~ to view graph of stars per week
 
 
 * Screenshot
