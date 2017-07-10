@@ -1,5 +1,5 @@
 
-* prerequisites
+* Prerequisites
 python: ~brew install python~
 
 postgres: https://postgresapp.com/
@@ -16,9 +16,15 @@ update config (repo name, github token)
 
 create database (call ~init_db()~ from python shell)
 
-~py app.py~
+* Run
 
-hit ~/retrieve~ to populate database
+~python3 app.py~
+
+view in browser at http://127.0.0.1:5000/ (default)
+
+visit ~/users/retrieve~ to populate database
+
+visit ~/watchers/retrieve~ to update watchers
 
 
 * Screenshot
