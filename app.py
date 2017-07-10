@@ -251,16 +251,21 @@ def aggregate_graph(column, noun, timespan=None):
                            title=title)
 
 
-@app.route('/retrieve')
-def get_github_data():
+@app.route('/<string:what>/retrieve/')
+def get_github_data(what=None):
     """call all API read functions"""
 
-    print('getting stargazers...')
-    get_and_cache_stargazers()
-    print('getting forks...')
-    get_and_cache_forks()
-    print('getting watchers...')
-    get_and_cache_watchers()
+    what = what or 'users'
+
+    if what in ['stars', 'stargazers', 'users']:
+        print('getting stargazers...')
+        get_and_cache_stargazers()
+    if what in ['forks', 'users']:
+        print('getting forks...')
+        get_and_cache_forks()
+    if what in ['watchers', 'users']:
+        print('getting watchers...')
+        get_and_cache_watchers()
     m = 'read data from github api, stored in cache'
     print(m)
     return m
