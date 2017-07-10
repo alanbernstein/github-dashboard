@@ -276,6 +276,27 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/init')
+def init():
+    try:
+        init_db()
+    except Exception as exc:
+        return 'error: %s' % exc
+
+    return 'initialized database'
+
+
+@app.route('/debug')
+def debug():
+    field = 'watched_time'
+    qq = (User.query.filter(column(field).isnot(None))
+          .order_by(column(field)))
+
+    rows = qq.all()
+    import ipdb; ipdb.set_trace()
+    return "debug'd"
+
+
 # Start #######################
 if __name__ == "__main__":
     app.run(host=host, port=port)

@@ -17,7 +17,7 @@ github token: https://github.com/settings/tokens
 
 update config (repo name, github token)
 
-create database (call ~init_db()~ from python shell)
+create database (call ~init_db()~ from python shell or visit ~/init~ after starting app)
 
 * Run
 
