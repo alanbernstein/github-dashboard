@@ -1,4 +1,11 @@
 
+* prerequisites
+python: ~brew install python~
+
+postgres: https://postgresapp.com/
+
+github token: https://github.com/settings/tokens
+
 * Setup
 
 ~git clone https://github.com/alanbernstein/github-dashboard~
@@ -7,7 +14,7 @@
 
 update config (repo name, github token)
 
-create database according to ~schema.sql~ (call ~init_db()~ from python shell)
+create database (call ~init_db()~ from python shell)
 
 ~py app.py~
 
